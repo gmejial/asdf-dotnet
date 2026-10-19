@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cat <<'EOF'
+curl
+tar
+git
+cargo (optional; used to build dver from source on platforms without a usable prebuilt binary)
+EOF

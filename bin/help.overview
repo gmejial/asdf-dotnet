@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cat <<'EOF'
+dver is a .NET SDK version manager inspired by nvm.
+
+This asdf plugin installs dver itself. It does not manage .NET SDK
+versions. After installing dver with asdf, use dver to install and select
+SDKs:
+
+  dver install 8.0.426
+  dver use 8.0.426 --global
+  dver setup
+
+dver stores its SDKs in ~/.dver, outside of asdf's install directory.
+EOF
