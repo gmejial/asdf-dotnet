@@ -9,8 +9,6 @@ set -euo pipefail
 
 GH_REPO="https://github.com/stescobedo92/dotnet-version-manager"
 TOOL_NAME="dvm"
-TOOL_TEST="dver --version"
-MIN_VERSION="0.4.0"
 
 fail() {
   echo -e "asdf-$TOOL_NAME: $*" >&2
@@ -19,8 +17,7 @@ fail() {
 
 curl_opts=(-fsSL)
 
-# Tags before 0.4.0 used unrelated raw-binary assets and are intentionally
-# excluded. 0.4.0 is the first release with the current archive layout.
+# Version sorting that works on Bash 3.2 and avoids `sort -V`.
 sort_versions() {
   sed 'h; s/[+-]/./g; s/.p\([[:digit:]]\)/.z\1/; s/$/.z/; G; s/\n/ /' |
     LC_ALL=C sort -t. -k 1,1 -k 2,2n -k 3,3n -k 4,4n -k 5,5n | awk '{print $2}'
@@ -32,6 +29,8 @@ list_github_tags() {
     sed 's/^v//'
 }
 
+# Tags before 0.4.0 used unrelated raw-binary assets and are intentionally
+# excluded. 0.4.0 is the first release with the current archive layout.
 list_all_versions() {
   list_github_tags |
     grep -v -- '-' |
@@ -88,6 +87,7 @@ binary_runs() {
 
 build_from_source() {
   local version="$1"
+  local download_path="${ASDF_DOWNLOAD_PATH:?}"
 
   command -v cargo >/dev/null 2>&1 || fail \
     "No usable prebuilt dver binary for $(platform_label), and cargo is not installed. Install Rust from https://rustup.rs and retry."
@@ -95,44 +95,47 @@ build_from_source() {
   echo "* No usable prebuilt dver binary for $(platform_label)." >&2
   echo "* Building dver $version from source with cargo..." >&2
 
-  rm -rf "$ASDF_DOWNLOAD_PATH/bin" "$ASDF_DOWNLOAD_PATH/dver"
+  rm -rf "${download_path:?}/bin" "$download_path/dver"
 
-  cargo install --locked --version "$version" --root "$ASDF_DOWNLOAD_PATH" dver ||
+  if ! cargo install --locked --version "$version" --root "$download_path" dver; then
+    rm -rf "${download_path:?}/bin" "$download_path/dver" "$download_path/.crates.toml" "$download_path/.crates2.json"
     fail "cargo install dver $version failed."
+  fi
 
-  [ -x "$ASDF_DOWNLOAD_PATH/bin/dver" ] ||
-    fail "cargo reported success but $ASDF_DOWNLOAD_PATH/bin/dver is missing."
+  [ -x "$download_path/bin/dver" ] ||
+    fail "cargo reported success but $download_path/bin/dver is missing."
 
-  binary_runs "$ASDF_DOWNLOAD_PATH/bin/dver" ||
+  binary_runs "$download_path/bin/dver" ||
     fail "The dver binary built from source is not executable on $(platform_label)."
 }
 
 download_release() {
-  local version="$1"
+  local version="${1#v}"
+  local download_path="${ASDF_DOWNLOAD_PATH:?}"
   local target archive url
 
-  mkdir -p "$ASDF_DOWNLOAD_PATH"
-  rm -f "$ASDF_DOWNLOAD_PATH/dver" "$ASDF_DOWNLOAD_PATH"/.dver-*.tar.gz
-  rm -rf "$ASDF_DOWNLOAD_PATH/bin"
+  mkdir -p "$download_path"
+  rm -f "$download_path/dver" "$download_path"/.dver-*.tar.gz
+  rm -rf "${download_path:?}/bin"
 
   target="$(prebuilt_target)"
 
   if [ -n "$target" ]; then
-    archive="$ASDF_DOWNLOAD_PATH/.dver-$version.tar.gz"
+    archive="$download_path/.dver-$version.tar.gz"
     url="$GH_REPO/releases/download/v$version/dver-$version-$target.tar.gz"
 
     echo "* Downloading dver $version for $(platform_label)..." >&2
     if curl "${curl_opts[@]}" -o "$archive" "$url"; then
-      if tar -xzf "$archive" -C "$ASDF_DOWNLOAD_PATH" dver; then
-        chmod +x "$ASDF_DOWNLOAD_PATH/dver"
-        if binary_runs "$ASDF_DOWNLOAD_PATH/dver"; then
+      if tar -xzf "$archive" -C "$download_path" dver; then
+        chmod +x "$download_path/dver"
+        if binary_runs "$download_path/dver"; then
           rm -f "$archive"
           return 0
         fi
       fi
     fi
 
-    rm -f "$archive" "$ASDF_DOWNLOAD_PATH/dver"
+    rm -f "$archive" "$download_path/dver"
     echo "* The prebuilt dver binary is not usable on $(platform_label)." >&2
   else
     echo "* No prebuilt dver binary is available for $(platform_label)." >&2
@@ -143,20 +146,23 @@ download_release() {
 
 install_version() {
   local install_type="$1"
-  local version="$2"
+  local version="${2#v}"
   local install_path="${3%/}"
+  local download_path="${ASDF_DOWNLOAD_PATH:?}"
   local bin_dir source_bin
 
   if [ "$install_type" != "version" ]; then
     fail "asdf-$TOOL_NAME supports release installs only (got ASDF_INSTALL_TYPE=$install_type)."
   fi
 
-  if [ -f "$ASDF_DOWNLOAD_PATH/dver" ]; then
-    source_bin="$ASDF_DOWNLOAD_PATH/dver"
-  elif [ -f "$ASDF_DOWNLOAD_PATH/bin/dver" ]; then
-    source_bin="$ASDF_DOWNLOAD_PATH/bin/dver"
+  [ -n "$install_path" ] || fail "ASDF_INSTALL_PATH is not set."
+
+  if [ -f "$download_path/dver" ]; then
+    source_bin="$download_path/dver"
+  elif [ -f "$download_path/bin/dver" ]; then
+    source_bin="$download_path/bin/dver"
   else
-    fail "Could not find the downloaded dver binary in $ASDF_DOWNLOAD_PATH."
+    fail "Could not find the downloaded dver binary in $download_path."
   fi
 
   bin_dir="$install_path/bin"
@@ -165,7 +171,7 @@ install_version() {
   chmod +x "$bin_dir/dver"
 
   if ! binary_runs "$bin_dir/dver"; then
-    rm -rf "$install_path"
+    rm -rf "${install_path:?}"
     fail "The installed dver binary is not executable on $(platform_label)."
   fi
 

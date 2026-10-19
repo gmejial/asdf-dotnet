@@ -88,6 +88,33 @@ binaries and falls back to `cargo install dver` automatically.
 Windows is not supported by this plugin directly. Use WSL and the Linux
 installation path.
 
+## Troubleshooting
+
+**`asdf-dvm: No usable prebuilt dver binary ... and cargo is not installed`**
+
+Install Rust from <https://rustup.rs> and retry. This is expected on Linux
+arm64 and Intel macOS until upstream publishes native release assets.
+
+**`dver: command not found`**
+
+Make sure a dvm version is selected:
+
+```bash
+asdf current dvm
+asdf global dvm 0.4.0
+asdf reshim dvm
+```
+
+**`dver` works but `dotnet` is not found**
+
+This plugin only provides the `dver` shim. Run `dver setup` to install dver's
+own `dotnet` shim and add `~/.dver/bin` to your `PATH`.
+
+**The installed .NET SDKs are not visible through asdf**
+
+That is expected. .NET SDKs are managed by dver under `~/.dver`, not by asdf.
+Use `dver list` and `dver current` to inspect them.
+
 ## How it works
 
 - `bin/list-all` lists dver releases from GitHub, excluding versions before
