@@ -1,5 +1,8 @@
 # asdf-dvm
 
+[![Build](https://github.com/gmejial/asdf-dvm/actions/workflows/build.yml/badge.svg)](https://github.com/gmejial/asdf-dvm/actions/workflows/build.yml)
+[![Lint](https://github.com/gmejial/asdf-dvm/actions/workflows/lint.yml/badge.svg)](https://github.com/gmejial/asdf-dvm/actions/workflows/lint.yml)
+
 An [asdf](https://asdf-vm.com/) plugin for [`dver`](https://github.com/stescobedo92/dotnet-version-manager), the .NET SDK version manager.
 
 > **Important:** this plugin manages **dver versions**, not .NET SDK versions.
@@ -16,7 +19,7 @@ An [asdf](https://asdf-vm.com/) plugin for [`dver`](https://github.com/stescobed
 ## Install
 
 ```bash
-asdf plugin add dvm https://github.com/<owner>/asdf-dvm.git
+asdf plugin add dvm https://github.com/gmejial/asdf-dvm.git
 asdf install dvm 0.4.0
 asdf global dvm 0.4.0
 ```
@@ -45,7 +48,7 @@ dver use 8.0.426 --global
 dver list
 ```
 
-To make `dotnet` available globally through dver's own shim, run:
+To make `dotnet` available globally, run:
 
 ```bash
 dver setup
@@ -69,6 +72,15 @@ asdf list all dvm             # installable dver versions
 asdf current dvm              # selected dver version
 asdf uninstall dvm 0.4.0      # remove dver (does not remove ~/.dver)
 ```
+
+### Why doesn't this plugin create a `dotnet` shim?
+
+dver already provides one via `dver setup`, which creates `~/.dver/bin/dotnet`
+and handles both managed SDK selection and the system-dotnet fallback. An asdf
+`dotnet` shim would shadow system `dotnet` when no dvm version is selected, can
+conflict with other dotnet plugins, and can recurse through dver's fallback
+unless the shim carefully rewrites `PATH`. Keeping `dotnet` under dver's control
+avoids those problems.
 
 ## Platform support
 
@@ -130,7 +142,7 @@ No `bin/list-bin-paths` script is needed because the binary lives in `bin/`.
 ## Development
 
 ```bash
-git clone https://github.com/<owner>/asdf-dvm.git
+git clone https://github.com/gmejial/asdf-dvm.git
 cd asdf-dvm
 
 asdf plugin add dvm "$PWD"
