@@ -12,6 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: asdf-vm/actions/install@v4
+      - run: scripts/test-extension-commands.bash
       - run: scripts/lint.bash
 
   actionlint:

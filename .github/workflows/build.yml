@@ -22,15 +22,3 @@ jobs:
         with:
           command: dotnet --version
           version: 8.0.426
-
-      - name: Test environment helpers
-        run: |
-          project="$(mktemp -d)"
-          printf 'dotnet 8.0.426\n' >"$project/.tool-versions"
-          cd "$project"
-          asdf cmd dotnet exec -- dotnet --version
-          asdf cmd dotnet exec -- printenv DOTNET_ROOT
-          asdf cmd dotnet exec -- printenv MSBuildSDKsPath
-          eval "$(asdf cmd dotnet env)"
-          test "$DOTNET_ROOT" = "$(asdf where dotnet)"
-          test -n "$MSBuildSDKsPath"
