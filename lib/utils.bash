@@ -27,6 +27,38 @@ list_stable_versions() {
   list_all_versions | grep -v -- '-' || true
 }
 
+asdf_command() {
+  if [ -n "${ASDF_DIR:-}" ] && [ -x "$ASDF_DIR/bin/asdf" ]; then
+    printf '%s\n' "$ASDF_DIR/bin/asdf"
+  else
+    printf '%s\n' "asdf"
+  fi
+}
+
+dotnet_install_root() {
+  local asdf_bin
+  local root
+
+  asdf_bin=$(asdf_command)
+  root=$("$asdf_bin" where dotnet)
+  printf '%s\n' "${root%/}"
+}
+
+dotnet_sdk_version() {
+  local asdf_bin
+  local root="$1"
+  local version
+
+  version=$(basename "$root")
+
+  if [ ! -d "$root/sdk/$version/Sdks" ]; then
+    asdf_bin=$(asdf_command)
+    version=$("$asdf_bin" exec dotnet --version)
+  fi
+
+  printf '%s\n' "$version"
+}
+
 download_dotnet_installer() {
   local download_path="${ASDF_DOWNLOAD_PATH:?}"
   local installer="$download_path/dotnet-install.sh"

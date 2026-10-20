@@ -12,4 +12,13 @@ dotnet-install.sh script. Select an SDK with .tool-versions:
 
 global.json is supported when legacy_version_file = yes is set in
 ~/.asdfrc. The plugin reads the sdk.version value from global.json.
+
+For editors, language servers, and global tools that do not run through
+the asdf shim, use:
+
+  asdf dotnet exec <command> [args...]
+
+To print the environment exports for eval:
+
+  eval "$(asdf dotnet env)"
 EOF

@@ -4,5 +4,6 @@ set -euo pipefail
 
 shfmt --language-dialect bash --indent 2 --write \
   bin/* \
-  lib/* \
-  scripts/*
+  lib/*.bash \
+  lib/commands/*.bash \
+  scripts/*.bash

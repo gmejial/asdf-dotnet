@@ -60,9 +60,13 @@ asdf install dotnet latest
 - `bin/download` downloads the official `dotnet-install.sh` installer.
 - `bin/install` runs the installer into `$ASDF_INSTALL_PATH` and verifies that
   the installed `dotnet` binary runs.
-- `bin/exec-env` sets `DOTNET_ROOT` to the selected SDK and disables
-  multi-level lookup, so the asdf-selected SDK is used consistently.
+- `bin/exec-env` sets `DOTNET_ROOT` to the selected SDK, disables multi-level
+  lookup, and sets `MSBuildSDKsPath` for the selected SDK.
 - `bin/list-bin-paths` exposes the SDK's root `dotnet` binary to asdf.
+- `lib/commands/command-exec.bash` adds `asdf dotnet exec`, which runs any
+  command with the selected SDK's environment.
+- `lib/commands/command-env.bash` adds `asdf dotnet env`, which prints the
+  environment exports for `eval`.
 
 Each SDK version is installed into its own asdf install directory. The SDK
 includes the matching .NET runtime, so `dotnet build`, `dotnet run`, and
@@ -98,6 +102,74 @@ when no `.tool-versions` version is set.
 `global.json`'s `rollForward` setting is not used to choose a different asdf
 install. The plugin pins the exact `sdk.version`; use `asdf install dotnet
 <version>` for any other SDK you need.
+
+## Editors, language servers, and global tools
+
+asdf only injects `bin/exec-env` into processes started through its shims.
+Running a global tool from `~/.dotnet/tools` directly, or letting an editor
+start a language server, does not go through the `dotnet` shim. Those processes
+may not see `DOTNET_ROOT` or `MSBuildSDKsPath`.
+
+Prefer local tools when possible:
+
+```bash
+dotnet new tool-manifest
+dotnet tool install csharp-ls
+dotnet tool run csharp-ls
+```
+
+Local tools run through the asdf `dotnet` shim, so they get the selected SDK's
+environment.
+
+To run a global tool or editor command with the plugin's environment:
+
+```bash
+asdf dotnet exec csharp-ls
+```
+
+`asdf dotnet exec` sets `DOTNET_ROOT`, `DOTNET_MULTILEVEL_LOOKUP=0`, and
+`MSBuildSDKsPath` before running the command. Configure the editor's language
+server command to use it, or point the editor at a wrapper:
+
+```bash
+#!/usr/bin/env bash
+exec asdf dotnet exec csharp-ls "$@"
+```
+
+To update the current shell instead:
+
+```bash
+eval "$(asdf dotnet env)"
+```
+
+An optional prompt hook keeps the variables in sync when the selected SDK
+changes. For Bash:
+
+```bash
+_asdf_dotnet_env() {
+  eval "$(asdf dotnet env 2>/dev/null)" || true
+}
+PROMPT_COMMAND="_asdf_dotnet_env${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+```
+
+For Zsh:
+
+```zsh
+_asdf_dotnet_env() {
+  eval "$(asdf dotnet env 2>/dev/null)" || true
+}
+autoload -U add-zsh-hook
+add-zsh-hook precmd _asdf_dotnet_env
+```
+
+GUI editors launched from the Dock or a desktop launcher may not inherit your
+shell environment at all. In that case, launch the editor from a terminal,
+configure its environment explicitly, or use the wrapper above.
+
+`csharp-ls` also uses MSBuildLocator, which has known problems with non-standard
+SDK locations such as asdf's install directory. If the wrapper still fails, use
+the local-tool setup or follow the upstream issue:
+[microsoft/MSBuildLocator#210](https://github.com/microsoft/MSBuildLocator/issues/210).
 
 ## Version list
 
@@ -163,7 +235,10 @@ cd asdf-dotnet
 
 asdf plugin add dotnet "$PWD"
 asdf install dotnet 8.0.426
+asdf global dotnet 8.0.426
 asdf exec dotnet --version
+asdf dotnet exec dotnet --version
+eval "$(asdf dotnet env)"
 
 scripts/lint.bash
 ```
