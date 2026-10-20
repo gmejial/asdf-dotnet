@@ -5,6 +5,9 @@ set -euo pipefail
 cat <<'EOF'
 curl
 tar
-git
-cargo (optional; used to build dver from source on platforms without a usable prebuilt binary)
+grep
+sed
+
+jq is optional. It is only needed by maintainers running
+scripts/update-versions.bash, and it is preferred when parsing global.json.
 EOF

@@ -1,0 +1,25 @@
+name: Update versions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 6 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update .NET SDK versions
+        run: scripts/update-versions.bash
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: Update .NET SDK versions
+          commit-message: Update .NET SDK versions
+          branch: update-dotnet-versions
+          delete-branch: true

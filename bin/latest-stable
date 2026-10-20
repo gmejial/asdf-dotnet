@@ -2,13 +2,12 @@
 
 set -euo pipefail
 
-current_script_path=${BASH_SOURCE[0]}
-plugin_dir=$(dirname "$(dirname "$current_script_path")")
+plugin_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
 # shellcheck source=lib/utils.bash
 source "${plugin_dir}/lib/utils.bash"
 
-versions=$(list_all_versions)
+versions=$(list_stable_versions)
 
 if [ -n "${1:-}" ]; then
   versions=$(printf '%s\n' "$versions" | grep -E "^$1" || true)

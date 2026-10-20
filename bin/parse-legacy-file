@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+file="${1:?parse-legacy-file requires a file path}"
+
+[ -f "$file" ] || exit 1
+
+version=""
+
+if command -v jq >/dev/null 2>&1; then
+  version=$(jq -r 'if (.sdk? and .sdk.version?) then .sdk.version else empty end' "$file" 2>/dev/null || true)
+fi
+
+if [ -z "$version" ]; then
+  version=$(
+    tr -d '\r\n' <"$file" |
+      sed -n 's/.*"sdk"[[:space:]]*:[[:space:]]*{[^}]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p'
+  )
+fi
+
+[ -n "$version" ] || exit 1
+
+printf '%s\n' "$version"

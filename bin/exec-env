@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+export DOTNET_ROOT="${ASDF_INSTALL_PATH:?}"
+export DOTNET_MULTILEVEL_LOOKUP=0

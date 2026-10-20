@@ -3,6 +3,7 @@
 set -euo pipefail
 
 cat <<'EOF'
-https://github.com/stescobedo92/dotnet-version-manager
+https://github.com/gmejial/asdf-dotnet
+https://dotnet.microsoft.com/download
 https://asdf-vm.com/plugins/create.html
 EOF

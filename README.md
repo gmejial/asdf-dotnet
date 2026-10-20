@@ -1,168 +1,186 @@
-# asdf-dvm
+# asdf-dotnet
 
-[![Build](https://github.com/gmejial/asdf-dvm/actions/workflows/build.yml/badge.svg)](https://github.com/gmejial/asdf-dvm/actions/workflows/build.yml)
-[![Lint](https://github.com/gmejial/asdf-dvm/actions/workflows/lint.yml/badge.svg)](https://github.com/gmejial/asdf-dvm/actions/workflows/lint.yml)
+[![Build](https://github.com/gmejial/asdf-dotnet/actions/workflows/build.yml/badge.svg)](https://github.com/gmejial/asdf-dotnet/actions/workflows/build.yml)
+[![Lint](https://github.com/gmejial/asdf-dotnet/actions/workflows/lint.yml/badge.svg)](https://github.com/gmejial/asdf-dotnet/actions/workflows/lint.yml)
 
-An [asdf](https://asdf-vm.com/) plugin for [`dver`](https://github.com/stescobedo92/dotnet-version-manager), the .NET SDK version manager.
+An [asdf](https://asdf-vm.com/) plugin for the [.NET SDK](https://dotnet.microsoft.com/).
 
-> **Important:** this plugin manages **dver versions**, not .NET SDK versions.
-> asdf installs the `dver` binary; dver continues to manage .NET SDKs in
-> `~/.dver`, exactly as documented by its upstream project.
+This plugin installs .NET SDKs directly, using Microsoft's official
+`dotnet-install.sh` script. It does not wrap another version manager.
+
+> Replacing the archived `hensou/asdf-dotnet` plugin? Remove the old plugin
+> first, then add this one:
+>
+> ```bash
+> asdf plugin remove dotnet
+> asdf plugin add dotnet https://github.com/gmejial/asdf-dotnet.git
+> ```
 
 ## Requirements
 
 - asdf `0.14.0` or newer
-- `git`, `curl`, and `tar`
-- Rust / `cargo` is optional. It is only needed on platforms without a usable
-  prebuilt dver binary (see [Platform support](#platform-support)).
+- `bash`, `curl`, `tar`, `grep`, and `sed`
+- `jq` is optional. It is only needed to maintain `versions.txt` and is used as
+  a faster parser when reading `global.json`.
+- On Linux, .NET has system dependencies such as ICU. See
+  [Microsoft's Linux install documentation](https://learn.microsoft.com/dotnet/core/install/linux).
 
 ## Install
 
 ```bash
-asdf plugin add dvm https://github.com/gmejial/asdf-dvm.git
-asdf install dvm 0.4.0
-asdf global dvm 0.4.0
+asdf plugin add dotnet https://github.com/gmejial/asdf-dotnet.git
+asdf install dotnet 10.0.402
+asdf global dotnet 10.0.402
 ```
 
-Or pin dver per project with `.tool-versions`:
+Or pin an SDK per project with `.tool-versions`:
 
 ```text
-dvm 0.4.0
+dotnet 10.0.402
 ```
 
 Then:
 
 ```bash
 asdf install
-dver --version
+dotnet --version
 ```
 
-## Use dver
-
-This plugin only puts `dver` on your `PATH` through an asdf shim. Use dver to
-install and select .NET SDKs:
+To find and install the newest stable SDK:
 
 ```bash
-dver install 8.0.426
-dver use 8.0.426 --global
-dver list
+asdf latest dotnet
+asdf install dotnet latest
 ```
-
-To make `dotnet` available globally, run:
-
-```bash
-dver setup
-```
-
-`dver setup` creates `~/.dver/bin/dotnet` and adds `~/.dver/bin` to your shell
-`PATH`. This is separate from asdf's shims.
-
-### Two-layer model
-
-| Layer | Manages | Selected by |
-| --- | --- | --- |
-| asdf | dver versions | `.tool-versions` / `asdf global` |
-| dver | .NET SDK versions | `global.json` / `dver use --global` |
-
-Useful commands:
-
-```bash
-asdf list dvm                 # installed dver versions
-asdf list all dvm             # installable dver versions
-asdf current dvm              # selected dver version
-asdf uninstall dvm 0.4.0      # remove dver (does not remove ~/.dver)
-```
-
-### Why doesn't this plugin create a `dotnet` shim?
-
-dver already provides one via `dver setup`, which creates `~/.dver/bin/dotnet`
-and handles both managed SDK selection and the system-dotnet fallback. An asdf
-`dotnet` shim would shadow system `dotnet` when no dvm version is selected, can
-conflict with other dotnet plugins, and can recurse through dver's fallback
-unless the shim carefully rewrites `PATH`. Keeping `dotnet` under dver's control
-avoids those problems.
-
-## Platform support
-
-| Platform | Installation strategy |
-| --- | --- |
-| Linux x86_64 | Prebuilt release archive |
-| macOS arm64 (Apple Silicon) | Prebuilt release archive |
-| macOS x86_64 (Intel) | Source build with `cargo` |
-| Linux arm64 | Source build with `cargo` |
-| Other platforms | Source build if `cargo` is available, otherwise an error |
-
-The upstream `dver-0.4.0-x86_64-apple-darwin.tar.gz` asset currently contains
-an **arm64** binary despite its filename. It works on Apple Silicon, but Intel
-macOS users need to build from source. This plugin detects unusable prebuilt
-binaries and falls back to `cargo install dver` automatically.
-
-Windows is not supported by this plugin directly. Use WSL and the Linux
-installation path.
-
-## Troubleshooting
-
-**`asdf-dvm: No usable prebuilt dver binary ... and cargo is not installed`**
-
-Install Rust from <https://rustup.rs> and retry. This is expected on Linux
-arm64 and Intel macOS until upstream publishes native release assets.
-
-**`dver: command not found`**
-
-Make sure a dvm version is selected:
-
-```bash
-asdf current dvm
-asdf global dvm 0.4.0
-asdf reshim dvm
-```
-
-**`dver` works but `dotnet` is not found**
-
-This plugin only provides the `dver` shim. Run `dver setup` to install dver's
-own `dotnet` shim and add `~/.dver/bin` to your `PATH`.
-
-**The installed .NET SDKs are not visible through asdf**
-
-That is expected. .NET SDKs are managed by dver under `~/.dver`, not by asdf.
-Use `dver list` and `dver current` to inspect them.
 
 ## How it works
 
-- `bin/list-all` lists dver releases from GitHub, excluding versions before
-  `0.4.0` and prereleases.
-- `bin/download` downloads the matching release archive into
-  `$ASDF_DOWNLOAD_PATH`, verifies that the binary can run, and falls back to a
-  source build if necessary.
-- `bin/install` places the binary at
-  `$ASDF_INSTALL_PATH/bin/dver`, where asdf creates its shim.
+- `bin/list-all` reads `versions.txt`, a list generated from
+  [Microsoft's release metadata](https://builds.dotnet.microsoft.com/dotnet/release-metadata/releases-index.json).
+- `bin/download` downloads the official `dotnet-install.sh` installer.
+- `bin/install` runs the installer into `$ASDF_INSTALL_PATH` and verifies that
+  the installed `dotnet` binary runs.
+- `bin/exec-env` sets `DOTNET_ROOT` to the selected SDK and disables
+  multi-level lookup, so the asdf-selected SDK is used consistently.
+- `bin/list-bin-paths` exposes the SDK's root `dotnet` binary to asdf.
 
-No `bin/list-bin-paths` script is needed because the binary lives in `bin/`.
+Each SDK version is installed into its own asdf install directory. The SDK
+includes the matching .NET runtime, so `dotnet build`, `dotnet run`, and
+`dotnet tool` work out of the box.
+
+## global.json
+
+By default, asdf selects the SDK from `.tool-versions`. The .NET CLI also reads
+`global.json`, so a project that pins a different SDK can fail even when an SDK
+is selected by asdf.
+
+To let asdf read the SDK version from `global.json`, enable asdf's legacy file
+support:
+
+```bash
+echo 'legacy_version_file = yes' >> ~/.asdfrc
+```
+
+The plugin reads `sdk.version` from `global.json`. `.tool-versions` still takes
+precedence. For example, with this `global.json`:
+
+```json
+{
+  "sdk": {
+    "version": "8.0.426"
+  }
+}
+```
+
+`asdf current dotnet` reports `8.0.426`, and `asdf install` installs that SDK
+when no `.tool-versions` version is set.
+
+`global.json`'s `rollForward` setting is not used to choose a different asdf
+install. The plugin pins the exact `sdk.version`; use `asdf install dotnet
+<version>` for any other SDK you need.
+
+## Version list
+
+`versions.txt` includes stable, preview, and release-candidate SDK versions.
+`asdf latest dotnet` excludes previews and release candidates.
+
+The list is refreshed by the `Update versions` GitHub Actions workflow. To
+refresh it locally:
+
+```bash
+scripts/update-versions.bash
+```
+
+This requires `jq`.
+
+## Platform support
+
+| Platform | Supported |
+| --- | --- |
+| Linux x86_64 | Yes |
+| Linux arm64 | Yes |
+| macOS arm64 (Apple Silicon) | Yes |
+| macOS x86_64 (Intel) | Yes |
+| Windows | Use WSL and the Linux installation path |
+
+The installer chooses the correct runtime identifier for the current platform.
+Very old SDKs may not publish a build for every platform; in that case the
+installer fails with a clear error and the plugin removes the partial install.
+
+## Troubleshooting
+
+**`dotnet: command not found`**
+
+Make sure a version is selected and the shim exists:
+
+```bash
+asdf current dotnet
+asdf global dotnet 10.0.402
+asdf reshim dotnet
+```
+
+**`dotnet` cannot find the SDK pinned in `global.json`**
+
+Enable legacy file support as described above, or install the pinned version
+explicitly:
+
+```bash
+asdf install dotnet <version>
+```
+
+**`DOTNET_ROOT` points at another .NET installation**
+
+The plugin sets `DOTNET_ROOT` for commands run through the asdf shim. If your
+shell profile sets `DOTNET_ROOT` after asdf initializes, it can override the
+selected SDK. Remove the conflicting export or scope it to the commands that
+need it.
 
 ## Development
 
 ```bash
-git clone https://github.com/gmejial/asdf-dvm.git
-cd asdf-dvm
+git clone https://github.com/gmejial/asdf-dotnet.git
+cd asdf-dotnet
 
-asdf plugin add dvm "$PWD"
-asdf install dvm 0.4.0
-asdf exec dver --version
+asdf plugin add dotnet "$PWD"
+asdf install dotnet 8.0.426
+asdf exec dotnet --version
 
 scripts/lint.bash
 ```
 
-To test without touching your normal asdf data directory, point asdf at a
-temporary directory:
+To test without touching your normal asdf data directory:
 
 ```bash
 export ASDF_DATA_DIR="$(mktemp -d)"
-asdf plugin add dvm "$PWD"
-asdf install dvm 0.4.0
-asdf global dvm 0.4.0
-asdf exec dver --version
+asdf plugin add dotnet "$PWD"
+asdf install dotnet 8.0.426
+asdf global dotnet 8.0.426
+asdf exec dotnet --version
 ```
 
 ## License
 
 MIT
+
+Inspired by [hensou/asdf-dotnet](https://github.com/hensou/asdf-dotnet) and
+[emersonsoares/asdf-dotnet-core](https://github.com/emersonsoares/asdf-dotnet-core).

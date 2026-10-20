@@ -3,15 +3,13 @@
 set -euo pipefail
 
 cat <<'EOF'
-dver is a .NET SDK version manager inspired by nvm.
+dotnet is the .NET SDK and runtime.
 
-This asdf plugin installs dver itself. It does not manage .NET SDK
-versions. After installing dver with asdf, use dver to install and select
-SDKs:
+This plugin installs .NET SDKs directly with Microsoft's official
+dotnet-install.sh script. Select an SDK with .tool-versions:
 
-  dver install 8.0.426
-  dver use 8.0.426 --global
-  dver setup
+  dotnet 8.0.426
 
-dver stores its SDKs in ~/.dver, outside of asdf's install directory.
+global.json is supported when legacy_version_file = yes is set in
+~/.asdfrc. The plugin reads the sdk.version value from global.json.
 EOF
