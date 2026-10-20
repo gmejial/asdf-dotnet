@@ -247,6 +247,18 @@ asdf set -u dotnet 10.0.402
 asdf reshim dotnet
 ```
 
+**`invalid command provided: dotnet`**
+
+asdf `0.20+` invokes plugin extension commands through `asdf cmd`:
+
+```bash
+asdf cmd dotnet env
+asdf cmd dotnet exec -- <command>
+```
+
+On asdf `0.14-0.19`, use `asdf dotnet env` and
+`asdf dotnet exec <command>` instead.
+
 **`dotnet` cannot find the SDK pinned in `global.json`**
 
 Enable legacy file support as described above, or install the pinned version
