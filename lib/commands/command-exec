@@ -12,7 +12,7 @@ if [ "${1:-}" = "--" ]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-  echo "usage: asdf cmd dotnet exec -- <command> [args...]" >&2
+  echo "usage: asdf cmd dotnet-sdk exec -- <command> [args...]" >&2
   exit 1
 fi
 
@@ -21,7 +21,7 @@ version=$(dotnet_sdk_version "$root")
 sdk_path="$root/sdk/$version/Sdks"
 
 if [ ! -d "$sdk_path" ]; then
-  echo "asdf-dotnet: SDK $version was not found under $root/sdk" >&2
+  echo "asdf-dotnet-sdk: SDK $version was not found under $root/sdk" >&2
   exit 1
 fi
 

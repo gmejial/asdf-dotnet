@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Shared helpers for the asdf-dotnet plugin.
+# Shared helpers for the asdf-dotnet-sdk plugin.
 #
 # This plugin installs .NET SDKs directly with Microsoft's official
 # dotnet-install.sh script. The available SDK list is generated from
@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-TOOL_NAME="dotnet"
+TOOL_NAME="dotnet-sdk"
 
 PLUGIN_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 VERSIONS_FILE="$PLUGIN_DIR/versions.txt"
@@ -65,7 +65,7 @@ dotnet_install_root() {
   local root
 
   asdf_bin=$(asdf_binary)
-  root=$("$asdf_bin" where dotnet)
+  root=$("$asdf_bin" where "$TOOL_NAME")
   printf '%s\n' "${root%/}"
 }
 

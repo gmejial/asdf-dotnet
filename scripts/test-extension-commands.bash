@@ -9,12 +9,12 @@ trap 'rm -rf "$tmp"' EXIT
 export ASDF_DATA_DIR="$tmp/data"
 export PATH="$tmp/bin:$PATH"
 
-export ASDF_DOTNET_GLOBAL_TOOL_PATH="$tmp/global-tools"
-export ASDF_DOTNET_SHIM_DIR="$tmp/shims"
+export ASDF_DOTNET_SDK_GLOBAL_TOOL_PATH="$tmp/global-tools"
+export ASDF_DOTNET_SDK_SHIM_DIR="$tmp/shims"
 
-asdf plugin add dotnet "$plugin_dir" >/dev/null
+asdf plugin add dotnet-sdk "$plugin_dir" >/dev/null
 
-install_path="$ASDF_DATA_DIR/installs/dotnet/8.0.426"
+install_path="$ASDF_DATA_DIR/installs/dotnet-sdk/8.0.426"
 mkdir -p "$install_path/sdk/8.0.426/Sdks" "$tmp/project" "$tmp/bin" "$tmp/global-tools" "$tmp/shims"
 
 cat >"$tmp/bin/dotnet" <<'EOF'
@@ -38,22 +38,22 @@ chmod +x "$tmp/global-tools/csharp-ls"
 printf '#!/usr/bin/env bash\n' >"$tmp/global-tools/custom-tool"
 chmod +x "$tmp/global-tools/custom-tool"
 
-printf 'dotnet 8.0.426\n' >"$tmp/project/.tool-versions"
+printf 'dotnet-sdk 8.0.426\n' >"$tmp/project/.tool-versions"
 cd "$tmp/project"
 
-asdf cmd dotnet env >"$tmp/env.out"
+asdf cmd dotnet-sdk env >"$tmp/env.out"
 grep -F "export DOTNET_ROOT=$install_path" "$tmp/env.out" >/dev/null
 grep -F "export DOTNET_MULTILEVEL_LOOKUP=0" "$tmp/env.out" >/dev/null
 grep -F "export MSBuildSDKsPath=$install_path/sdk/8.0.426/Sdks" "$tmp/env.out" >/dev/null
 
-asdf cmd dotnet exec -- dotnet --version >"$tmp/exec.out"
+asdf cmd dotnet-sdk exec -- dotnet --version >"$tmp/exec.out"
 grep -F "args=--version" "$tmp/exec.out" >/dev/null
 grep -F "root=$install_path" "$tmp/exec.out" >/dev/null
 grep -F "lookup=0" "$tmp/exec.out" >/dev/null
 grep -F "sdks=$install_path/sdk/8.0.426/Sdks" "$tmp/exec.out" >/dev/null
 
 printf 'custom file\n' >"$tmp/shims/custom-tool"
-asdf cmd dotnet shims >"$tmp/shims.out"
+asdf cmd dotnet-sdk shims >"$tmp/shims.out"
 grep -F "Global tool directory: $tmp/global-tools" "$tmp/shims.out" >/dev/null
 grep -F "Shim directory: $tmp/shims" "$tmp/shims.out" >/dev/null
 grep -F "export PATH=$tmp/shims:\$PATH" "$tmp/shims.out" >/dev/null
@@ -61,7 +61,7 @@ grep -F "Created 1, removed 0, skipped 1." "$tmp/shims.out" >/dev/null
 [ -x "$tmp/shims/csharp-ls" ]
 grep -F "custom file" "$tmp/shims/custom-tool" >/dev/null
 
-asdf cmd dotnet shims >"$tmp/shims2.out"
+asdf cmd dotnet-sdk shims >"$tmp/shims2.out"
 grep -F "Created 0, removed 0, skipped 1." "$tmp/shims2.out" >/dev/null
 
 "$tmp/shims/csharp-ls" --version >"$tmp/global.out"
@@ -71,7 +71,7 @@ grep -F "global-lookup=0" "$tmp/global.out" >/dev/null
 grep -F "global-sdks=$install_path/sdk/8.0.426/Sdks" "$tmp/global.out" >/dev/null
 
 rm "$tmp/global-tools/csharp-ls"
-asdf cmd dotnet shims >"$tmp/shims3.out"
+asdf cmd dotnet-sdk shims >"$tmp/shims3.out"
 grep -F "Created 0, removed 1, skipped 1." "$tmp/shims3.out" >/dev/null
 [ ! -e "$tmp/shims/csharp-ls" ]
 grep -F "custom file" "$tmp/shims/custom-tool" >/dev/null

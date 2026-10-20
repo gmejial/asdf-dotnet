@@ -3,26 +3,27 @@
 set -euo pipefail
 
 cat <<'EOF'
-dotnet is the .NET SDK and runtime.
+dotnet-sdk installs and manages .NET SDKs and their runtimes.
 
 This plugin installs .NET SDKs directly with Microsoft's official
 dotnet-install.sh script. It requires asdf 0.20.0 or newer.
 
+The plugin name is dotnet-sdk; the installed binary is still dotnet.
 Select an SDK with .tool-versions:
 
-  dotnet 8.0.426
+  dotnet-sdk 8.0.426
 
 global.json is supported when legacy_version_file = yes is set in
 ~/.asdfrc. The plugin reads the sdk.version value from global.json.
 
 Run a command with the selected SDK's environment:
 
-  asdf cmd dotnet exec -- <command> [args...]
-  eval "$(asdf cmd dotnet env)"
+  asdf cmd dotnet-sdk exec -- <command> [args...]
+  eval "$(asdf cmd dotnet-sdk env)"
 
 Create wrappers for global tools in ~/.dotnet/tools:
 
-  asdf cmd dotnet shims
+  asdf cmd dotnet-sdk shims
 
 Then put the shim directory on PATH before ~/.dotnet/tools. The wrappers
 resolve the SDK from the current directory, just like the dotnet shim.

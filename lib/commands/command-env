@@ -12,7 +12,7 @@ version=$(dotnet_sdk_version "$root")
 sdk_path="$root/sdk/$version/Sdks"
 
 if [ ! -d "$sdk_path" ]; then
-  echo "asdf-dotnet: SDK $version was not found under $root/sdk" >&2
+  echo "asdf-dotnet-sdk: SDK $version was not found under $root/sdk" >&2
   exit 1
 fi
 

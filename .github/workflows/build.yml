@@ -21,6 +21,7 @@ jobs:
         uses: asdf-vm/actions/plugin-test@v4
         with:
           command: dotnet --version
+          plugin: dotnet-sdk
           version: 8.0.426
 
   real_sdk:
@@ -42,11 +43,11 @@ jobs:
           asdf_version: latest
       - name: Install the plugin and SDK
         run: |
-          asdf plugin add dotnet "$GITHUB_WORKSPACE"
-          asdf install dotnet 8.0.426
-          asdf set -u dotnet 8.0.426
+          asdf plugin add dotnet-sdk "$GITHUB_WORKSPACE"
+          asdf install dotnet-sdk 8.0.426
+          asdf set -u dotnet-sdk 8.0.426
           asdf exec dotnet --version
-          asdf reshim dotnet
+          asdf reshim dotnet-sdk
       - name: Build and run a console project
         run: |
           project="$RUNNER_TEMP/console-project"
@@ -59,8 +60,8 @@ jobs:
       - name: Build and run a global tool through its shim
         run: |
           dotnet tool install --global csharp-ls --version 0.16.0
-          asdf cmd dotnet shims
-          shim_dir="${XDG_DATA_HOME:-$HOME/.local/share}/asdf-dotnet/bin"
+          asdf cmd dotnet-sdk shims
+          shim_dir="${XDG_DATA_HOME:-$HOME/.local/share}/asdf-dotnet-sdk/bin"
           export PATH="$shim_dir:$PATH"
           [ "$(command -v csharp-ls)" = "$shim_dir/csharp-ls" ]
           csharp-ls --version
@@ -73,7 +74,7 @@ jobs:
           mkdir -p "$project/sub"
           printf '{"sdk":{"version":"8.0.426"}}\n' >"$project/global.json"
           cd "$project/sub"
-          asdf current dotnet | grep -F '8.0.426'
-          printf 'dotnet 8.0.426\n' >"$project/.tool-versions"
+          asdf current dotnet-sdk | grep -F '8.0.426'
+          printf 'dotnet-sdk 8.0.426\n' >"$project/.tool-versions"
           printf '{"sdk":{"version":"9.0.312"}}\n' >"$project/global.json"
-          asdf current dotnet | grep -F '8.0.426'
+          asdf current dotnet-sdk | grep -F '8.0.426'

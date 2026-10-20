@@ -3,7 +3,7 @@
 set -euo pipefail
 
 cat <<'EOF'
-https://github.com/gmejial/asdf-dotnet
+https://github.com/gmejial/asdf-dotnet-sdk
 https://dotnet.microsoft.com/download
 https://asdf-vm.com/plugins/create.html
 EOF
