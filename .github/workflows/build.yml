@@ -22,3 +22,58 @@ jobs:
         with:
           command: dotnet --version
           version: 8.0.426
+
+  real_sdk:
+    name: Real SDK smoke test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: asdf-vm/actions/setup@v4
+        with:
+          asdf_version: latest
+      - name: Install the plugin and SDK
+        run: |
+          asdf plugin add dotnet "$GITHUB_WORKSPACE"
+          asdf install dotnet 8.0.426
+          asdf set -u dotnet 8.0.426
+          asdf exec dotnet --version
+          asdf reshim dotnet
+      - name: Build and run a console project
+        run: |
+          project="$RUNNER_TEMP/console-project"
+          rm -rf "$project"
+          mkdir -p "$project"
+          cd "$project"
+          dotnet new console -o app --no-restore
+          dotnet build app
+          dotnet run --project app --no-build
+      - name: Build and run a global tool through its shim
+        run: |
+          dotnet tool install --global csharp-ls --version 0.16.0
+          asdf cmd dotnet shims
+          shim_dir="${XDG_DATA_HOME:-$HOME/.local/share}/asdf-dotnet/bin"
+          export PATH="$shim_dir:$PATH"
+          [ "$(command -v csharp-ls)" = "$shim_dir/csharp-ls" ]
+          csharp-ls --version
+      - name: Resolve global.json and .tool-versions precedence
+        run: |
+          rm -f "$HOME/.tool-versions"
+          printf 'legacy_version_file = yes\n' >"$HOME/.asdfrc"
+          project="$RUNNER_TEMP/legacy-project"
+          rm -rf "$project"
+          mkdir -p "$project/sub"
+          printf '{"sdk":{"version":"8.0.426"}}\n' >"$project/global.json"
+          cd "$project/sub"
+          asdf current dotnet | grep -F '8.0.426'
+          printf 'dotnet 8.0.426\n' >"$project/.tool-versions"
+          printf '{"sdk":{"version":"9.0.312"}}\n' >"$project/global.json"
+          asdf current dotnet | grep -F '8.0.426'

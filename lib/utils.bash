@@ -43,11 +43,28 @@ asdf_command() {
   printf '%s\n' "asdf"
 }
 
+asdf_binary() {
+  local asdf_bin
+
+  asdf_bin=$(asdf_command)
+
+  case "$asdf_bin" in
+  */*) ;;
+  *) asdf_bin=$(command -v "$asdf_bin" || true) ;;
+  esac
+
+  if [ -z "$asdf_bin" ] || [ ! -x "$asdf_bin" ]; then
+    fail "asdf executable was not found."
+  fi
+
+  printf '%s\n' "$asdf_bin"
+}
+
 dotnet_install_root() {
   local asdf_bin
   local root
 
-  asdf_bin=$(asdf_command)
+  asdf_bin=$(asdf_binary)
   root=$("$asdf_bin" where dotnet)
   printf '%s\n' "${root%/}"
 }
@@ -60,7 +77,7 @@ dotnet_sdk_version() {
   version=$(basename "$root")
 
   if [ ! -d "$root/sdk/$version/Sdks" ]; then
-    asdf_bin=$(asdf_command)
+    asdf_bin=$(asdf_binary)
     version=$("$asdf_bin" exec dotnet --version)
   fi
 

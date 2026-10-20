@@ -2,4 +2,31 @@
 
 set -euo pipefail
 
-exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/command-exec.bash" "$@"
+plugin_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+
+# shellcheck source=lib/utils.bash
+source "${plugin_dir}/lib/utils.bash"
+
+if [ "${1:-}" = "--" ]; then
+  shift
+fi
+
+if [ "$#" -eq 0 ]; then
+  echo "usage: asdf cmd dotnet exec -- <command> [args...]" >&2
+  exit 1
+fi
+
+root=$(dotnet_install_root)
+version=$(dotnet_sdk_version "$root")
+sdk_path="$root/sdk/$version/Sdks"
+
+if [ ! -d "$sdk_path" ]; then
+  echo "asdf-dotnet: SDK $version was not found under $root/sdk" >&2
+  exit 1
+fi
+
+export DOTNET_ROOT="$root"
+export DOTNET_MULTILEVEL_LOOKUP=0
+export MSBuildSDKsPath="$sdk_path"
+
+exec "$@"
