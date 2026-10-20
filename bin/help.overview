@@ -14,11 +14,15 @@ global.json is supported when legacy_version_file = yes is set in
 ~/.asdfrc. The plugin reads the sdk.version value from global.json.
 
 For editors, language servers, and global tools that do not run through
-the asdf shim, use:
+the asdf shim, run the command with the selected SDK's environment.
+
+On asdf 0.20+:
+
+  asdf cmd dotnet exec -- <command> [args...]
+  eval "$(asdf cmd dotnet env)"
+
+On asdf 0.14-0.19:
 
   asdf dotnet exec <command> [args...]
-
-To print the environment exports for eval:
-
   eval "$(asdf dotnet env)"
 EOF

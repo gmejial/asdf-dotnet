@@ -18,8 +18,9 @@ This plugin installs .NET SDKs directly, using Microsoft's official
 
 ## Requirements
 
-- asdf `0.14.0` or newer. asdf `0.20.0` and newer use `asdf set -u` where
-  older versions used `asdf global`.
+- asdf `0.14.0` or newer. asdf `0.20.0` and newer use `asdf cmd dotnet ...`
+  for plugin commands and `asdf set -u` instead of `asdf global`. The examples
+  show the asdf `0.20+` forms with the older forms noted.
 - `bash`, `curl`, `tar`, `grep`, and `sed`
 - `jq` is optional. It is only needed to maintain `versions.txt` and is used as
   a faster parser when reading `global.json`.
@@ -69,10 +70,12 @@ asdf install dotnet latest
 - `bin/exec-env` sets `DOTNET_ROOT` to the selected SDK, disables multi-level
   lookup, and sets `MSBuildSDKsPath` for the selected SDK.
 - `bin/list-bin-paths` exposes the SDK's root `dotnet` binary to asdf.
-- `lib/commands/command-exec.bash` adds `asdf dotnet exec`, which runs any
-  command with the selected SDK's environment.
-- `lib/commands/command-env.bash` adds `asdf dotnet env`, which prints the
-  environment exports for `eval`.
+- `lib/commands/command-exec` and `command-exec.bash` add
+  `asdf cmd dotnet exec` on asdf `0.20+` and `asdf dotnet exec` on older
+  versions. They run any command with the selected SDK's environment.
+- `lib/commands/command-env` and `command-env.bash` add
+  `asdf cmd dotnet env` on asdf `0.20+` and `asdf dotnet env` on older
+  versions. They print the environment exports for `eval`.
 
 Each SDK version is installed into its own asdf install directory. The SDK
 includes the matching .NET runtime, so `dotnet build`, `dotnet run`, and
@@ -130,30 +133,47 @@ environment.
 To run a global tool or editor command with the plugin's environment:
 
 ```bash
+# asdf 0.20+
+asdf cmd dotnet exec -- csharp-ls
+
+# asdf 0.14-0.19
 asdf dotnet exec csharp-ls
 ```
 
-`asdf dotnet exec` sets `DOTNET_ROOT`, `DOTNET_MULTILEVEL_LOOKUP=0`, and
-`MSBuildSDKsPath` before running the command. Configure the editor's language
-server command to use it, or point the editor at a wrapper:
+`asdf cmd dotnet exec` (or `asdf dotnet exec` on older asdf) sets `DOTNET_ROOT`,
+`DOTNET_MULTILEVEL_LOOKUP=0`, and `MSBuildSDKsPath` before running the command.
+On asdf `0.20+`, keep the `--` after `exec`; it stops asdf from parsing the
+wrapped command's flags. Configure the editor's language server command to use
+it, or point the editor at a wrapper:
 
 ```bash
 #!/usr/bin/env bash
-exec asdf dotnet exec csharp-ls "$@"
+exec asdf cmd dotnet exec -- csharp-ls "$@"
 ```
+
+On asdf `0.14-0.19`, replace `asdf cmd dotnet exec --` with
+`asdf dotnet exec` in the wrapper.
 
 To update the current shell instead:
 
 ```bash
+# asdf 0.20+
+eval "$(asdf cmd dotnet env)"
+
+# asdf 0.14-0.19
 eval "$(asdf dotnet env)"
 ```
 
 An optional prompt hook keeps the variables in sync when the selected SDK
-changes. For Bash:
+changes. This function works with both asdf command styles. For Bash:
 
 ```bash
 _asdf_dotnet_env() {
-  eval "$(asdf dotnet env 2>/dev/null)" || true
+  if asdf cmd dotnet env >/dev/null 2>&1; then
+    eval "$(asdf cmd dotnet env 2>/dev/null)" || true
+  else
+    eval "$(asdf dotnet env 2>/dev/null)" || true
+  fi
 }
 PROMPT_COMMAND="_asdf_dotnet_env${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 ```
@@ -162,7 +182,11 @@ For Zsh:
 
 ```zsh
 _asdf_dotnet_env() {
-  eval "$(asdf dotnet env 2>/dev/null)" || true
+  if asdf cmd dotnet env >/dev/null 2>&1; then
+    eval "$(asdf cmd dotnet env 2>/dev/null)" || true
+  else
+    eval "$(asdf dotnet env 2>/dev/null)" || true
+  fi
 }
 autoload -U add-zsh-hook
 add-zsh-hook precmd _asdf_dotnet_env
@@ -255,8 +279,14 @@ asdf set -u dotnet 8.0.426
 # asdf global dotnet 8.0.426
 
 asdf exec dotnet --version
-asdf dotnet exec dotnet --version
-eval "$(asdf dotnet env)"
+
+# asdf 0.20+
+asdf cmd dotnet exec -- dotnet --version
+eval "$(asdf cmd dotnet env)"
+
+# asdf 0.14-0.19
+# asdf dotnet exec dotnet --version
+# eval "$(asdf dotnet env)"
 
 scripts/lint.bash
 ```
@@ -267,7 +297,13 @@ To test without touching your normal asdf data directory:
 export ASDF_DATA_DIR="$(mktemp -d)"
 asdf plugin add dotnet "$PWD"
 asdf install dotnet 8.0.426
-asdf global dotnet 8.0.426
+
+# asdf 0.20+
+asdf set -u dotnet 8.0.426
+
+# asdf 0.14-0.19
+# asdf global dotnet 8.0.426
+
 asdf exec dotnet --version
 ```
 

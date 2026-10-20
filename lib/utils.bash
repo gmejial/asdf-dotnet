@@ -28,11 +28,19 @@ list_stable_versions() {
 }
 
 asdf_command() {
-  if [ -n "${ASDF_DIR:-}" ] && [ -x "$ASDF_DIR/bin/asdf" ]; then
-    printf '%s\n' "$ASDF_DIR/bin/asdf"
-  else
-    printf '%s\n' "asdf"
+  if [ -n "${ASDF_DIR:-}" ]; then
+    if [ -x "$ASDF_DIR/bin/asdf" ]; then
+      printf '%s\n' "$ASDF_DIR/bin/asdf"
+      return
+    fi
+
+    if [ -x "$ASDF_DIR/asdf" ]; then
+      printf '%s\n' "$ASDF_DIR/asdf"
+      return
+    fi
   fi
+
+  printf '%s\n' "asdf"
 }
 
 dotnet_install_root() {
