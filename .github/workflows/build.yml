@@ -25,7 +25,9 @@ jobs:
 
       - name: Test environment helpers
         run: |
-          asdf global dotnet 8.0.426
+          project="$(mktemp -d)"
+          printf 'dotnet 8.0.426\n' >"$project/.tool-versions"
+          cd "$project"
           asdf dotnet exec dotnet --version
           asdf dotnet exec printenv DOTNET_ROOT
           asdf dotnet exec printenv MSBuildSDKsPath

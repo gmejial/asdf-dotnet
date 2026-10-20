@@ -18,7 +18,8 @@ This plugin installs .NET SDKs directly, using Microsoft's official
 
 ## Requirements
 
-- asdf `0.14.0` or newer
+- asdf `0.14.0` or newer. asdf `0.20.0` and newer use `asdf set -u` where
+  older versions used `asdf global`.
 - `bash`, `curl`, `tar`, `grep`, and `sed`
 - `jq` is optional. It is only needed to maintain `versions.txt` and is used as
   a faster parser when reading `global.json`.
@@ -30,7 +31,12 @@ This plugin installs .NET SDKs directly, using Microsoft's official
 ```bash
 asdf plugin add dotnet https://github.com/gmejial/asdf-dotnet.git
 asdf install dotnet 10.0.402
-asdf global dotnet 10.0.402
+
+# asdf 0.20+
+asdf set -u dotnet 10.0.402
+
+# asdf 0.14-0.19
+# asdf global dotnet 10.0.402
 ```
 
 Or pin an SDK per project with `.tool-versions`:
@@ -207,7 +213,13 @@ Make sure a version is selected and the shim exists:
 
 ```bash
 asdf current dotnet
-asdf global dotnet 10.0.402
+
+# asdf 0.20+
+asdf set -u dotnet 10.0.402
+
+# asdf 0.14-0.19
+# asdf global dotnet 10.0.402
+
 asdf reshim dotnet
 ```
 
@@ -235,7 +247,13 @@ cd asdf-dotnet
 
 asdf plugin add dotnet "$PWD"
 asdf install dotnet 8.0.426
-asdf global dotnet 8.0.426
+
+# asdf 0.20+
+asdf set -u dotnet 8.0.426
+
+# asdf 0.14-0.19
+# asdf global dotnet 8.0.426
+
 asdf exec dotnet --version
 asdf dotnet exec dotnet --version
 eval "$(asdf dotnet env)"
